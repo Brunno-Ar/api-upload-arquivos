@@ -1,55 +1,56 @@
 require("dotenv").config();
+const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const pool = require("./db"); // Conexão com PostgreSQL
-const { uploadFileToS3 } = require("./s3"); // Nosso módulo para S3
+const cors = require("cors"); // <== IMPORTADO AQUI
+const pool = require("./db");
+const { uploadFileToS3 } = require("./s3");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Configuração do Multer para armazenar os arquivos localmente (temporariamente)
+app.use(cors()); // <== HABILITA O CORS
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Pasta onde os arquivos serão salvos temporariamente
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    // Cria um nome único para o arquivo
-    cb(null, Date.now() + path.extname(file.originalname));
+    const fileName = req.body.fileName || Date.now();
+    cb(null, fileName + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage });
 
-// Rota para upload de arquivos
 app.post("/upload", upload.any(), async (req, res) => {
+  console.log("Recebendo requisição no backend!", req.body, req.files);
+
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "Nenhum arquivo enviado!" });
   }
 
-  const { filename, mimetype, size, path: localPath } = req.files[0];
+  const fileName = req.body.fileName;
+  const { mimetype, size, path: localPath } = req.files[0];
 
   try {
-    // Salvar metadados no PostgreSQL
     const query = `
       INSERT INTO uploads (filename, mimetype, size)
       VALUES ($1, $2, $3) RETURNING *;
     `;
-    const values = [filename, mimetype, size];
+    const values = [fileName, mimetype, size];
     const result = await pool.query(query, values);
 
-    // Upload do arquivo para o AWS S3
-    const s3Key = filename; // Pode ser customizado conforme necessário
+    const s3Key = fileName;
     const s3Result = await uploadFileToS3(localPath, s3Key);
 
-    // Opcional: Remover o arquivo local após o upload para S3 (caso queira)
-     const fs = require('fs');
-     fs.unlinkSync(localPath);
+    fs.unlinkSync(localPath);
 
-    res.json({ 
-      message: "Upload realizado com sucesso!", 
+    res.json({
+      message: "Upload realizado com sucesso!",
       file: result.rows[0],
-      s3: s3Result,
+      s3Result,
     });
   } catch (error) {
     console.error("Erro:", error);
