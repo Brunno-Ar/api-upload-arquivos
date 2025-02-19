@@ -13,6 +13,8 @@ const port = process.env.PORT || 10000;
 // Configuração do CORS
 app.use(cors({
   origin: "https://upload-files-frontend.vercel.app/", // Substitua pelo domínio do seu frontend
+  methods: "GET,POST,DELETE", // Permitir os métodos necessários
+  allowedHeaders: "Content-Type", // Permitir o header Content-Type
 }));
 
 app.use(express.json()); // Para lidar com JSON no corpo da requisição
