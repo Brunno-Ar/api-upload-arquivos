@@ -8,7 +8,7 @@ const pool = require("./db");
 const { uploadFileToS3, deleteFileFromS3 } = require("./s3");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json()); // Para lidar com JSON no corpo da requisição
