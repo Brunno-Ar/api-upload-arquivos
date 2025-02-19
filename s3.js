@@ -29,4 +29,18 @@ function uploadFileToS3(filePath, key) {
   return s3.upload(params).promise();
 }
 
-module.exports = { uploadFileToS3 };
+/**
+ * Função para excluir um arquivo do S3.
+ * @param {string} key - Nome do arquivo a ser excluído no S3.
+ * @returns {Promise} - Retorna uma promise com o resultado da exclusão.
+ */
+function deleteFileFromS3(key) {
+  const params = {
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: key, // Nome do arquivo no S3
+  };
+
+  return s3.deleteObject(params).promise();
+}
+
+module.exports = { uploadFileToS3, deleteFileFromS3 };

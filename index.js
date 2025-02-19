@@ -3,14 +3,15 @@ const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const cors = require("cors"); // <== IMPORTADO AQUI
+const cors = require("cors");
 const pool = require("./db");
-const { uploadFileToS3 } = require("./s3");
+const { uploadFileToS3, deleteFileFromS3 } = require("./s3");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors()); // <== HABILITA O CORS
+app.use(cors());
+app.use(express.json()); // Para lidar com JSON no corpo da requisição
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -31,7 +32,8 @@ app.post("/upload", upload.any(), async (req, res) => {
     return res.status(400).json({ error: "Nenhum arquivo enviado!" });
   }
 
-  const fileName = req.body.fileName;
+  // Garantindo que fileName sempre tenha um valor válido
+  const fileName = req.body.fileName || req.files[0].filename;
   const { mimetype, size, path: localPath } = req.files[0];
 
   try {
@@ -55,6 +57,39 @@ app.post("/upload", upload.any(), async (req, res) => {
   } catch (error) {
     console.error("Erro:", error);
     res.status(500).json({ error: "Erro ao processar o upload" });
+  }
+});
+
+// Rota para listar os arquivos salvos no banco de dados
+app.get("/files", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT filename FROM uploads");
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Erro ao buscar arquivos:", error);
+    res.status(500).json({ error: "Erro ao listar arquivos" });
+  }
+});
+
+// Rota para excluir arquivos
+app.delete("/files/:filename", async (req, res) => {
+  const { filename } = req.params;
+
+  try {
+    // Deletar do banco de dados
+    const result = await pool.query("DELETE FROM uploads WHERE filename = $1 RETURNING *", [filename]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Arquivo não encontrado" });
+    }
+
+    // Deletar do S3
+    await deleteFileFromS3(filename);
+
+    res.json({ message: "Arquivo excluído com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao excluir arquivo:", error);
+    res.status(500).json({ error: "Erro ao excluir arquivo" });
   }
 });
 
