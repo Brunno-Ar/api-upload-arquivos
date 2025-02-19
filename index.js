@@ -22,12 +22,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Rota para upload de arquivos
-app.post("/upload", upload.single("file"), async (req, res) => {
-  if (!req.file) {
+app.post("/upload", upload.any(), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "Nenhum arquivo enviado!" });
   }
 
-  const { filename, mimetype, size, path: localPath } = req.file;
+  const { filename, mimetype, size, path: localPath } = req.files[0];
 
   try {
     // Salvar metadados no PostgreSQL
