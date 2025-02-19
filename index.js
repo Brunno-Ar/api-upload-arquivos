@@ -10,7 +10,9 @@ const { uploadFileToS3, deleteFileFromS3 } = require("./s3");
 const app = express();
 const port = process.env.PORT || 10000;
 
-app.use(cors());
+app.use(cors({
+  origin: "https://api-upload-arquivos.onrender.com",
+}));
 app.use(express.json()); // Para lidar com JSON no corpo da requisição
 
 const storage = multer.diskStorage({
@@ -94,5 +96,5 @@ app.delete("/files/:filename", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+  console.log(`Servidor rodando na porta ${port}`);
 });
