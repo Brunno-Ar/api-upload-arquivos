@@ -113,12 +113,23 @@ app.delete("/files/:filename", async (req, res) => {
   const { filename } = req.params;
   try {
     // Deletar do banco de dados
-    const result = await pool.query("DELETE FROM uploads WHERE filename = $1 RETURNING *", [filename]);
+    console.log("Deletando do banco de dados...");
+    const result = await pool.query(
+      "DELETE FROM uploads WHERE filename = $1 RETURNING *",
+      [filename]
+    );
+
     if (result.rowCount === 0) {
+      console.error("Arquivo não encontrado no banco de dados.");
       return res.status(404).json({ error: "Arquivo não encontrado" });
     }
+    console.log("Arquivo deletado do banco de dados:", result.rows[0]);
+
     // Deletar do S3
+    console.log("Deletando do S3...");
     await deleteFileFromS3(filename);
+    console.log("Arquivo deletado do S3.");
+
     res.json({ message: "Arquivo excluído com sucesso!" });
   } catch (error) {
     console.error("Erro ao excluir arquivo:", error);
