@@ -10,9 +10,15 @@ const { uploadFileToS3, deleteFileFromS3 } = require("./s3");
 const app = express();
 const port = process.env.PORT || 10000;
 
+// Cria o diretório 'uploads' se ele não existir
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
 // Configuração do CORS
 app.use(cors({
-  origin: "https://upload-files-frontend-git-main-bruno-araujos-projects-e2357c54.vercel.app/", // Substitua pelo domínio do seu frontend
+  origin: "https://upload-files-frontend.vercel.app/",
   methods: "GET,POST,DELETE", // Permitir os métodos necessários
   allowedHeaders: "Content-Type", // Permitir o header Content-Type
 }));
@@ -53,19 +59,27 @@ app.post("/upload", upload.any(), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "Nenhum arquivo enviado!" });
   }
+
   // Garantindo que fileName sempre tenha um valor válido
   const fileName = req.body.fileName || req.files[0].filename;
   const { mimetype, size, path: localPath } = req.files[0];
+
   try {
+    // Salvar no banco de dados
     const query = `
       INSERT INTO uploads (filename, mimetype, size)
       VALUES ($1, $2, $3) RETURNING *;
     `;
     const values = [fileName, mimetype, size];
     const result = await pool.query(query, values);
+
+    // Enviar para o S3
     const s3Key = fileName;
     const s3Result = await uploadFileToS3(localPath, s3Key);
+
+    // Remover o arquivo local após o upload
     fs.unlinkSync(localPath);
+
     res.json({
       message: "Upload realizado com sucesso!",
       file: result.rows[0],
