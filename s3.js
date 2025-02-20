@@ -10,23 +10,22 @@ AWS.config.update({
 
 const s3 = new AWS.S3();
 
-/**
- * Função para enviar um arquivo ao S3.
- * @param {string} filePath - Caminho local do arquivo.
- * @param {string} key - Nome com o qual o arquivo será salvo no S3.
- * @returns {Promise} - Retorna uma promise com os dados do upload.
- */
-function uploadFileToS3(filePath, key) {
-  const fs = require('fs');
-  const fileContent = fs.readFileSync(filePath);
-
+// Função para enviar um arquivo para o S3
+async function uploadFileToS3(filePath, fileName) {
   const params = {
-    Bucket: process.env.AWS_S3_BUCKET,
-    Key: key, // Nome do arquivo no S3
-    Body: fileContent,
+    Bucket: process.env.AWS_BUCKET_NAME, // Nome do bucket
+    Key: fileName, // Nome do arquivo no S3
+    Body: fs.createReadStream(filePath), // Conteúdo do arquivo
   };
 
-  return s3.upload(params).promise();
+  try {
+    const result = await s3.upload(params).promise();
+    console.log(`Arquivo enviado para o S3: ${fileName}`);
+    return result;
+  } catch (error) {
+    console.error("Erro ao enviar arquivo para o S3:", error);
+    throw error;
+  }
 }
 
 /**

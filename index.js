@@ -62,31 +62,41 @@ pool.query(`
 // Rota para upload de arquivos
 app.post("/upload", upload.any(), async (req, res) => {
   console.log("Recebendo requisição no backend!", req.body, req.files);
+
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "Nenhum arquivo enviado!" });
   }
 
-  // Garantindo que fileName sempre tenha um valor válido
-  const file = req.files[0]; // Pega o primeiro arquivo enviado
-  const fileName = req.body.fileName || file.originalname; // Usa o nome enviado ou o original
-  const { mimetype, size, path: localPath } = file;
+  const file = req.files[0];
+  const fileNameFromRequest = req.body.fileName; // Nome fornecido pelo usuário (opcional)
+  const originalFileName = file.originalname; // Nome original do arquivo
 
+  // Garantindo que fileName sempre tenha um valor válido
+  const fileName = fileNameFromRequest || originalFileName;
+
+  const { mimetype, size, path: localPath } = file;
 
   try {
     // Salvar no banco de dados
+    console.log("Salvando no banco de dados...");
     const query = `
       INSERT INTO uploads (filename, mimetype, size)
       VALUES ($1, $2, $3) RETURNING *;
     `;
     const values = [fileName, mimetype, size];
     const result = await pool.query(query, values);
+    console.log("Arquivo salvo no banco de dados:", result.rows[0]);
 
     // Enviar para o S3
-    const s3Key = fileName;
+    console.log("Enviando para o S3...");
+    const s3Key = fileName; // Usar o mesmo nome salvo no banco de dados
     const s3Result = await uploadFileToS3(localPath, s3Key);
+    console.log("Arquivo enviado para o S3:", s3Result);
 
     // Remover o arquivo local após o upload
+    console.log("Removendo o arquivo local...");
     fs.unlinkSync(localPath);
+    console.log("Arquivo local removido.");
 
     res.json({
       message: "Upload realizado com sucesso!",
