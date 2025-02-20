@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 require('dotenv').config();
+const fs = require('fs'); // Adicione esta linha para usar o módulo `fs`
 
 // Configuração do AWS SDK
 AWS.config.update({
@@ -33,13 +34,19 @@ async function uploadFileToS3(filePath, fileName) {
  * @param {string} key - Nome do arquivo a ser excluído no S3.
  * @returns {Promise} - Retorna uma promise com o resultado da exclusão.
  */
-function deleteFileFromS3(key) {
+async function deleteFileFromS3(key) {
   const params = {
-    Bucket: process.env.AWS_S3_BUCKET,
+    Bucket: process.env.AWS_BUCKET_NAME, // Use a mesma variável para o bucket
     Key: key, // Nome do arquivo no S3
   };
 
-  return s3.deleteObject(params).promise();
+  try {
+    await s3.deleteObject(params).promise();
+    console.log(`Arquivo excluído do S3: ${key}`);
+  } catch (error) {
+    console.error("Erro ao excluir arquivo do S3:", error);
+    throw error;
+  }
 }
 
 module.exports = { uploadFileToS3, deleteFileFromS3 };

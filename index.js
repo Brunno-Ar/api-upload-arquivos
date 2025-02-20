@@ -124,6 +124,7 @@ app.get("/files", async (req, res) => {
 // Rota para excluir arquivos
 app.delete("/files/:filename", async (req, res) => {
   const { filename } = req.params;
+
   try {
     // Deletar do banco de dados
     console.log("Deletando do banco de dados...");
