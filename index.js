@@ -18,10 +18,16 @@ if (!fs.existsSync(uploadDir)) {
 
 // Configuração do CORS
 app.use(cors({
-  origin: "https://upload-files-frontend.vercel.app/",
-  methods: "GET,POST,DELETE", // Permitir os métodos necessários
-  allowedHeaders: "Content-Type", // Permitir o header Content-Type
+  origin: [
+    "https://upload-files-frontend.vercel.app", // Domínio do frontend no Vercel
+    "http://localhost:5173" // Domínio do frontend local
+  ],
+  methods: ["GET", "POST", "DELETE"], // Permitir os métodos necessários
+  allowedHeaders: ["Content-Type"], // Permitir o header Content-Type
 }));
+
+// Middleware para lidar com requisições OPTIONS
+app.options("*", cors()); // Isso garante que todas as rotas respondam corretamente às requisições OPTIONS
 
 app.use(express.json()); // Para lidar com JSON no corpo da requisição
 
