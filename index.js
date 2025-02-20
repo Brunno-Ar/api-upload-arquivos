@@ -47,7 +47,8 @@ const upload = multer({ storage });
 pool.query(`
   CREATE TABLE IF NOT EXISTS uploads (
     id SERIAL PRIMARY KEY,
-    filename TEXT NOT NULL,
+    filename TEXT NOT NULL,          -- Nome fornecido pelo usuário ou gerado automaticamente
+    original_filename TEXT NOT NULL, -- Nome original do arquivo
     mimetype TEXT NOT NULL,
     size INTEGER NOT NULL
   );
@@ -69,7 +70,7 @@ app.post("/upload", upload.any(), async (req, res) => {
 
   const file = req.files[0];
   const fileNameFromRequest = req.body.fileName; // Nome fornecido pelo usuário (opcional)
-  const originalFileName = file.originalname; // Nome original do arquivo
+  const originalFileName = file.originalname;   // Nome original do arquivo
 
   // Garantindo que fileName sempre tenha um valor válido
   const fileName = fileNameFromRequest || originalFileName;
@@ -80,10 +81,10 @@ app.post("/upload", upload.any(), async (req, res) => {
     // Salvar no banco de dados
     console.log("Salvando no banco de dados...");
     const query = `
-      INSERT INTO uploads (filename, mimetype, size)
-      VALUES ($1, $2, $3) RETURNING *;
+      INSERT INTO uploads (filename, original_filename, mimetype, size)
+      VALUES ($1, $2, $3, $4) RETURNING *;
     `;
-    const values = [fileName, mimetype, size];
+    const values = [fileName, originalFileName, mimetype, size];
     const result = await pool.query(query, values);
     console.log("Arquivo salvo no banco de dados:", result.rows[0]);
 
@@ -112,7 +113,7 @@ app.post("/upload", upload.any(), async (req, res) => {
 // Rota para listar os arquivos salvos no banco de dados
 app.get("/files", async (req, res) => {
   try {
-    const result = await pool.query("SELECT filename FROM uploads");
+    const result = await pool.query("SELECT filename, original_filename FROM uploads");
     res.json(result.rows);
   } catch (error) {
     console.error("Erro ao buscar arquivos:", error);
