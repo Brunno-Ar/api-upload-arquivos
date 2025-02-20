@@ -67,8 +67,10 @@ app.post("/upload", upload.any(), async (req, res) => {
   }
 
   // Garantindo que fileName sempre tenha um valor válido
-  const fileName = req.body.fileName || req.files[0].filename;
-  const { mimetype, size, path: localPath } = req.files[0];
+  const file = req.files[0]; // Pega o primeiro arquivo enviado
+  const fileName = req.body.fileName || file.originalname; // Usa o nome enviado ou o original
+  const { mimetype, size, path: localPath } = file;
+
 
   try {
     // Salvar no banco de dados
