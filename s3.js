@@ -1,6 +1,9 @@
 const AWS = require('aws-sdk');
 require('dotenv').config();
-const fs = require('fs'); // Adicione esta linha para usar o módulo `fs`
+const fs = require('fs');
+
+// Log para verificar a variável de ambiente
+console.log("Nome do bucket S3:", process.env.AWS_BUCKET_NAME);
 
 // Configuração do AWS SDK
 AWS.config.update({
@@ -20,6 +23,7 @@ async function uploadFileToS3(filePath, fileName) {
   };
 
   try {
+    console.log(`Enviando arquivo para o S3: ${fileName}`);
     const result = await s3.upload(params).promise();
     console.log(`Arquivo enviado para o S3: ${fileName}`);
     return result;

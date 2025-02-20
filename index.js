@@ -1,5 +1,9 @@
-require("dotenv").config();
-const fs = require("fs");
+require('dotenv').config();
+console.log("Arquivo .env carregado:");
+console.log("AWS_ACCESS_KEY_ID:", process.env.AWS_ACCESS_KEY_ID);
+console.log("AWS_SECRET_ACCESS_KEY:", process.env.AWS_SECRET_ACCESS_KEY ? "******" : "NÃO DEFINIDA");
+console.log("AWS_REGION:", process.env.AWS_REGION);
+console.log("AWS_BUCKET_NAME:", process.env.AWS_BUCKET_NAME);const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
